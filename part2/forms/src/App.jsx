@@ -3,6 +3,7 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import personService from './services/personService'
+import Notification from './components/Notification'
 
 const DisplayResults = ({list}) => { 
   return (
@@ -55,6 +56,7 @@ function App() {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState(0)
   const [personSearchResults, setResults] = useState([])
+  const [message, setMessage] = useState([])
 
   useEffect(() => {
     console.log('effect')
@@ -82,16 +84,22 @@ function App() {
   console.log(persons.filter(onePerson => onePerson.id != id));
   
   const updatedPersonList = persons.filter(onePerson => onePerson.id != id)
-  personService.deletePerson(id).then(
+  personService.deletePerson(id).then( (p) => {
     //persons.filter(onePerson => onePerson.id != id)
-    setPersons(updatedPersonList)
-  )   
+      console.log('this is p ', p)
+      setPersons(updatedPersonList)
+    }
+  ).catch(e =>
+  {
+    console.log('errr', e)
+    setMessage([`Information of ${name} has already been removed from server`, 'error'])
+  })   
 }
 
   const FormSubmit = (ev) => {
       ev.preventDefault()
       const found = persons.findIndex(e => e.name.trim().toLowerCase() === newName.toLowerCase())
-      //console.log(found)
+      console.log(found)
       if (found === -1)
       {
         //const phoneBook = persons.concat({name: newName, number: newNumber, id: persons.length})
@@ -100,14 +108,17 @@ function App() {
           adddedPerson => {
               const phoneBook = persons.concat(adddedPerson)
               setPersons(phoneBook)
+              
+              setMessage( [`Added ${newName}`,'success'])
             }
           ) 
       }
       else
       {
-        if (window.confirm (`${newName} is akready added ti phonebook, replace the old number with new one?`))
+        if (window.confirm (`${newName} is already added ti phonebook, replace the old number with new one?`))
         {
-          const data = personService.updatePerson(found, {name: newName, number: newNumber}).then(
+          console.log('id is ' + persons[found].id)
+          const data = personService.updatePerson(persons[found].id, {name: newName, number: newNumber}).then(
             updatedPerson => {
                 const pb = persons.map((p) => {
                     console.log(`found ${found}`);
@@ -119,11 +130,14 @@ function App() {
                     return +p.id === found ? updatedPerson : p 
                   }
                 )
-                
+                const newMessage = [`Updated ${newName}`, 'success']
+                setMessage(newMessage)
                 console.log('updated person update ', updatedPerson)
                 console.log('phonebook update ', pb)
                 setPersons(pb)
+                
               }
+              
             ) 
         }  
       //console.log(phoneBook)
@@ -133,6 +147,7 @@ function App() {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} />
       <Filter onChange={findNames}></Filter>
       <PersonForm HandleNameChange={HandleNameChange} HandleNumberChange={HandleNumberChange} FormSubmit={FormSubmit}></PersonForm>
       <h2>Numbers</h2>

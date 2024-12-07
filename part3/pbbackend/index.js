@@ -55,30 +55,42 @@ app.delete('/api/persons/:id', (request, response) => {
 })
 
 const generateId = () => {
-  const maxId = notes.length > 0
-    ? Math.max(...notes.map(n => Number(n.id)))
+  const maxId = phoneBook.length > 0
+    ? Math.max(...phoneBook.map(n => Number(n.id)))
     : 0
   return String(maxId + 1)
 }
 
 app.post('/api/persons', (request, response) => {
   const body = request.body
-
-  if (!body.content) {
+  //console.log(body)
+  const found = phoneBook.filter(p => {
+    //console.log(p.name)
+    if( p.name === body.name) return p
+  }) 
+  //console.log(found.length)
+  //console.log(found[0].name)
+  if (!body.name || !body.number) {        
     return response.status(400).json({ 
       error: 'content missing' 
     })
   }
 
-  const note = {
-    content: body.content,
-    important: Boolean(body.important) || false,
+  if (found.length) {        
+    return response.status(400).json({ 
+      error: 'name must be unique' 
+    })
+  }
+
+  const person = {
+    name: body.name,
+    number: body.number,
     id: generateId(),
   }
 
-  notes = notes.concat(note)
+  phoneBook = phoneBook.concat(person)
 
-  response.json(note)
+  response.json(phoneBook)
 })
 
 const PORT = 3001
